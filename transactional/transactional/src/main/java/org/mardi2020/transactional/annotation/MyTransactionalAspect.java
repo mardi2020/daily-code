@@ -21,21 +21,34 @@ public class MyTransactionalAspect {
 
     @Around(value = "@annotation(myTransactional)", argNames = "joinPoint,myTransactional")
     public Object around(ProceedingJoinPoint joinPoint, MyTransactional myTransactional) throws Throwable {
+        log.info("Applying MyTransactional with propagation: {}, readOnly: {}",
+                myTransactional.propagation(), myTransactional.readOnly());
+        final boolean isWriteOperation = isWriteOperation(joinPoint);
+        log.info("Checking if {} is a write operation: {}",
+                joinPoint.getSignature().getName(), isWriteOperation(joinPoint));
         boolean newTransaction = false;
+
         try {
+            final boolean readOnly = myTransactional.readOnly();
+            final Propagation propagation = myTransactional.propagation();
+
+            if (isWriteOperation && readOnly) {
+                throw new SQLException("This transaction is read-only");
+            }
+
             if (myTransactional.propagation() == Propagation.NEVER) {
-                if (transactionManager.getConnection(true) != null) {
+                if (transactionManager.getConnection(true, isWriteOperation) != null) {
                     throw new SQLException("Transaction exists, but NEVER propagation specified");
                 }
                 log.info("Executing method without transaction due to NEVER propagation.");
             }
             else if (myTransactional.propagation() == Propagation.REQUIRES_NEW) {
-                transactionManager.startTransaction(myTransactional.propagation());
+                transactionManager.startTransaction(propagation, readOnly);
                 newTransaction = true;
             }
             else if (myTransactional.propagation() == Propagation.REQUIRED) {
-                if (transactionManager.getConnection(true) == null) {
-                    transactionManager.startTransaction(myTransactional.propagation());
+                if (transactionManager.getConnection(true, isWriteOperation) == null) {
+                    transactionManager.startTransaction(propagation, readOnly);
                     newTransaction = true;
                 }
             }
@@ -43,12 +56,12 @@ public class MyTransactionalAspect {
             Object result = joinPoint.proceed();
 
             if (newTransaction) {
-                transactionManager.commitTransaction();
+                transactionManager.commitTransaction(isWriteOperation);
             }
             return result;
         } catch (Exception e) {
             if (newTransaction) {
-                transactionManager.rollbackTransaction();
+                transactionManager.rollbackTransaction(isWriteOperation);
             }
             throw e;
         } finally {
@@ -56,5 +69,10 @@ public class MyTransactionalAspect {
                 transactionManager.endTransaction();
             }
         }
+    }
+
+    private boolean isWriteOperation(ProceedingJoinPoint joinPoint) {
+        String methodName = joinPoint.getSignature().getName();
+        return methodName.startsWith("add") || methodName.equals("update") || methodName.equals("delete");
     }
 }

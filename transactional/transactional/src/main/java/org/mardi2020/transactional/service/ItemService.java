@@ -23,7 +23,7 @@ public class ItemService {
 
     @MyTransactional(readOnly = true)
     public List<String> getItems() throws SQLException {
-        Connection connection = transactionManager.getConnection(false);
+        Connection connection = transactionManager.getConnection(false, false);
         PreparedStatement statement = connection.prepareStatement("SELECT name FROM items");
         ResultSet resultSet = statement.executeQuery();
 
@@ -34,8 +34,25 @@ public class ItemService {
         return items;
     }
 
+    @MyTransactional(readOnly = true)
+    public String getItemByName(final String name) throws SQLException {
+        Connection connection = transactionManager.getConnection(false, false);
+        PreparedStatement statement = connection.prepareStatement("SELECT name FROM items WHERE name = ?");
+        statement.setString(1, name);
+        ResultSet resultSet = statement.executeQuery();
+        if (resultSet.next()) {
+            return resultSet.getString("name");
+        }
+        throw new SQLException("Item not found");
+    }
+
     @MyTransactional
     public void addItemWithRequired(String item) throws SQLException {
+        addItem(item, false);
+    }
+
+    @MyTransactional(readOnly = true)
+    public void addItemWithRequiredTestOnly(String item) throws SQLException {
         addItem(item, false);
     }
 
@@ -65,7 +82,7 @@ public class ItemService {
     }
 
     private void addItem(final String item, final boolean allowNoTransaction) throws SQLException {
-        Connection connection = transactionManager.getConnection(allowNoTransaction);
+        Connection connection = transactionManager.getConnection(allowNoTransaction, true);
         if (connection == null) {
             log.warn("No active transaction, skipping database operation.");
             return;  // 트랜잭션 없이 실행을 허용해야 함

@@ -26,16 +26,32 @@ class ItemServiceTest {
 
     @BeforeEach
     void clean() throws SQLException {
-        transactionManager.startTransaction(Propagation.REQUIRED);
-        Connection connection = transactionManager.getConnection(false);
+        transactionManager.startTransaction(Propagation.REQUIRED, false);
+        Connection connection = transactionManager.getConnection(false, true);
         PreparedStatement statement = connection.prepareStatement("DELETE FROM items");
         statement.executeUpdate();
-        transactionManager.commitTransaction();
+        transactionManager.commitTransaction(true);
     }
 
     @AfterEach
-    void tearDown() throws SQLException {
+    void tearDown() {
         transactionManager.endTransaction();
+    }
+
+    @Test
+    @DisplayName("ReadOnly 트랜잭션에서 데이터 추가하려고 시도하면 예외가 발생")
+    void testReadOnly() {
+        Exception exception = assertThrows(SQLException.class, () ->
+                itemService.addItemWithRequiredTestOnly("Item111"));
+        assertTrue(exception.getMessage().contains("This transaction is read-only"));
+    }
+
+    @Test
+    @DisplayName("ReadOnly 트랜잭션에서 데이터를 조회")
+    void testReadOnly2() throws SQLException {
+        itemService.addItemWithRequired("Bread");
+        List<String> items = itemService.getItems();
+        assertEquals(1, items.size());
     }
 
     @Test
@@ -60,7 +76,7 @@ class ItemServiceTest {
     @Test
     @DisplayName("NEVER - 트랜잭션이 있으면 예외 발생")
     void testNeverPropagation() throws SQLException {
-        transactionManager.startTransaction(Propagation.REQUIRED); // 트랜잭션 존재
+        transactionManager.startTransaction(Propagation.REQUIRED, false); // 트랜잭션 존재
 
         try {
             // 트랜잭션이 존재하는 상태에서 Apple을 넣으려고 시도
@@ -69,7 +85,7 @@ class ItemServiceTest {
 
             assertEquals("Transaction exists, but NEVER propagation specified", e.getMessage());
         } finally {
-            transactionManager.commitTransaction();
+            transactionManager.commitTransaction(true);
         }
     }
 
