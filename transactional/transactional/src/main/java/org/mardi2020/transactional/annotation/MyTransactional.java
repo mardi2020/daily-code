@@ -1,5 +1,6 @@
 package org.mardi2020.transactional.annotation;
 
+import org.mardi2020.transactional.config.Isolation;
 import org.mardi2020.transactional.config.Propagation;
 
 import java.lang.annotation.ElementType;
@@ -14,6 +15,8 @@ public @interface MyTransactional {
     Propagation propagation() default Propagation.REQUIRED;
 
     boolean readOnly() default false;
+
+    Isolation isolation() default Isolation.DEFAULT;
 
     String name() default "";
 }

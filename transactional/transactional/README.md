@@ -51,3 +51,18 @@
         paymentRepository.save(new Payment());
     }
     ```
+  
+## Isolation
+| 고립 수준            | Dirty Read | Non-Repeatable Read | Phantom Read |
+|------------------|------------|---------------------|--------------|
+| READ UNCOMMITTED | 허용         | 허용                  | 허용           |
+| READ COMMITTED   | 불가         | 허용                  | 허용           |
+| REPEATABLE READ  | 불가         | 방지                  | 허용           |
+| SERIALIZABLE     | 불가         | 방지                  | 방지           |
+
+Spring에서의 @Transactional isolation 디폴트 값은 READ COMMITTED
+
+MySQL에서는 READ_COMMITTED나 REPEATABLE_READ가 주로 사용되며, SERIALIZABLE은 제한적이라고 함
+
+높은 격리 수준은 동시성을 감소시켜 필요 이상으로 높은 수준을 설정하여 성능 저하가 발생되지 않게 조심
+

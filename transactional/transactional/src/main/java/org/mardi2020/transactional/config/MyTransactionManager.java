@@ -19,7 +19,8 @@ public class MyTransactionManager {
 
     private final DataSource dataSource;
 
-    public void startTransaction(final Propagation propagation, final boolean readOnly) throws SQLException {
+    public void startTransaction(final Propagation propagation, final boolean readOnly,
+                                 final Isolation isolation) throws SQLException {
         log.info("Starting transaction with propagation: {} in thread: {}", propagation,
                 Thread.currentThread().getName());
         Connection existingConnection = connectionThreadLocal.get();
@@ -30,8 +31,8 @@ public class MyTransactionManager {
         }
 
         switch (propagation) {
-            case REQUIRED -> handleRequired(existingConnection, readOnly);
-            case REQUIRES_NEW -> handleRequiresNew(existingConnection, readOnly);
+            case REQUIRED -> handleRequired(existingConnection, readOnly, isolation);
+            case REQUIRES_NEW -> handleRequiresNew(existingConnection, readOnly, isolation);
             case SUPPORTS -> handleSupports(existingConnection);
             case MANDATORY -> handleMandatory(existingConnection);
             case NEVER -> handleNever(existingConnection);
@@ -91,34 +92,36 @@ public class MyTransactionManager {
         return connection;
     }
 
-    private void createNewConnection(final boolean readOnly) throws SQLException {
+    private void createNewConnection(final boolean readOnly, final Isolation isolation) throws SQLException {
         Connection connection = dataSource.getConnection();
         connection.setAutoCommit(false); // 트랜잭션 자동 커밋 해제
+        connection.setTransactionIsolation(isolation.getLevel());
         if (readOnly) {
             connection.setReadOnly(true);
-            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         }
         connectionThreadLocal.set(connection);
         log.info("New {} connection created for thread: {}", readOnly ? "read-only" : "writable",
                 Thread.currentThread().getName());
     }
 
-    private void handleRequired(Connection existingConnection, final boolean readOnly) throws SQLException {
+    private void handleRequired(Connection existingConnection, final boolean readOnly,
+                                final Isolation isolation) throws SQLException {
         // 트랜잭션이 없거나 닫혀있다면 생성
         if (existingConnection == null || existingConnection.isClosed()) {
-            createNewConnection(readOnly);
+            createNewConnection(readOnly, isolation);
             return;
         }
         connectionThreadLocal.set(existingConnection); // 기존 트랜잭션 사용
     }
 
-    private void handleRequiresNew(Connection existingConnection, final boolean readOnly) throws SQLException {
+    private void handleRequiresNew(Connection existingConnection, final boolean readOnly,
+                                   final Isolation isolation) throws SQLException {
         if (existingConnection != null && !existingConnection.isClosed()) {
             log.info("Suspending existing transaction for thread: {}", Thread.currentThread().getName());
             suspendedConnectionThreadLocal.set(existingConnection); // 보류된 트랜잭션 연결 따로 저장
             connectionThreadLocal.remove(); // 현재 연결 제거
         }
-        createNewConnection(readOnly);
+        createNewConnection(readOnly, isolation);
     }
 
     private void handleSupports(Connection existingConnection) throws SQLException {

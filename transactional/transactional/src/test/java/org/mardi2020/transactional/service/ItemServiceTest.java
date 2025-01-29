@@ -1,6 +1,7 @@
 package org.mardi2020.transactional.service;
 
 import org.junit.jupiter.api.*;
+import org.mardi2020.transactional.config.Isolation;
 import org.mardi2020.transactional.config.MyTransactionManager;
 import org.mardi2020.transactional.config.Propagation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ class ItemServiceTest {
 
     @BeforeEach
     void clean() throws SQLException {
-        transactionManager.startTransaction(Propagation.REQUIRED, false);
+        transactionManager.startTransaction(Propagation.REQUIRED, false, Isolation.DEFAULT);
         Connection connection = transactionManager.getConnection(false, true);
         PreparedStatement statement = connection.prepareStatement("DELETE FROM items");
         statement.executeUpdate();
@@ -76,7 +77,7 @@ class ItemServiceTest {
     @Test
     @DisplayName("NEVER - 트랜잭션이 있으면 예외 발생")
     void testNeverPropagation() throws SQLException {
-        transactionManager.startTransaction(Propagation.REQUIRED, false); // 트랜잭션 존재
+        transactionManager.startTransaction(Propagation.REQUIRED, false, Isolation.DEFAULT); // 트랜잭션 존재
 
         try {
             // 트랜잭션이 존재하는 상태에서 Apple을 넣으려고 시도
