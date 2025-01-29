@@ -66,3 +66,30 @@ MySQL에서는 READ_COMMITTED나 REPEATABLE_READ가 주로 사용되며, SERIALI
 
 높은 격리 수준은 동시성을 감소시켜 필요 이상으로 높은 수준을 설정하여 성능 저하가 발생되지 않게 조심
 
+## JDK 동적 프록시와 CGLIB
+> Spring AOP에서 프록시를 생성하는 방법
+
+### 1️⃣ JDK 동적 프록시 - reflection 기반
+- Java 표준 라이브러리(java.lang.reflect.Proxy)를 이용해 인터페이스 기반 프록시 객체 생성
+- 인터페이스를 구현한 클래스만 프록시 생성 가능
+- `InvocationHandler`를 활용하여 메서드 호출을 가로채 AOP 기능 적용
+- proxyTargetClass=false (인터페이스 기반 프록시)
+
+### 2️⃣ CGLIB (Code Generation Library) - 바이트코드 조작
+- **인터페이스가 없어도 클래스 기반으로 프록시 객체 생성 가능**
+- asm(바이트코드 조작 라이브러리) 기반으로 `MethodInterceptor`를 사용하여 메서드 호출을 가로챔
+- **상속**을 통해 프록시 객체 생성 -> 즉, 상속이 불가능한 final 클래스는 해당되지 않음
+- Spring의 @Transactional, @Cacheable
+- proxyTargetClass=true (클래스 기반 프록시)
+
+### 3️⃣ 선택 기준
+
+- Spring 이 JDK 동적 프록시를 사용하는 경우
+  - 인터페이스 기반 프록시가 생성이 가능할 때
+  - 안정적이고 메모리 소비가 적다고 한다
+- Spring 이 GCLIB 을 사용하는 경우
+  - 인터페이스가 없고 상속가능한 일반 클래스인 경우
+  - Spring Boot에서 기본 설정 값임
+
+
+
