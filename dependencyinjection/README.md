@@ -21,3 +21,12 @@
 [main] INFO org.mardi2020.dependencyinjection.service.UserService -- Executing UserService#getHello
 [main] INFO org.mardi2020.dependencyinjection.service.ItemService -- hello
 ```
+
+### 등록된 bean이 singleton인지 확인 결과
+```text
+[Test worker] INFO org.mardi2020.dependencyinjection.config.MyApplicationContextV1 -- Registered bean: ItemService
+[Test worker] INFO org.mardi2020.dependencyinjection.config.MyApplicationContextV1 -- Registered bean: DependencyinjectionApplication
+[Test worker] INFO org.mardi2020.dependencyinjection.config.MyApplicationContextV1 -- Registered bean: UserService
+[Test worker] INFO org.mardi2020.dependencyinjection.config.MyApplicationContextV1 -- Application context loaded. Registered beans: [class org.mardi2020.dependencyinjection.service.ItemService, class org.mardi2020.dependencyinjection.DependencyinjectionApplication, class org.mardi2020.dependencyinjection.service.UserService]
+[Test worker] INFO org.mardi2020.dependencyinjection.BeanTest -- ✅ Singleton Test Passed! All beans are singleton.
+```
