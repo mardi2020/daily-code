@@ -108,7 +108,11 @@ public class MyApplicationContextV1 {
      * @implSpec 클래스 파일이면 로드하고 @MyComponent 가 있으면 Bean 으로 등록
      * @param clazz class
      */
-    private void registerBean(Class<?> clazz) {
+    public void registerBean(Class<?> clazz) {
+        if (beans.containsKey(clazz)) {
+            log.warn("⚠️ Warning: {} is already registered as singleton! Skipping registration.", clazz.getSimpleName());
+            return;
+        }
         try {
             Object instance = clazz.getDeclaredConstructor().newInstance();
             beans.put(clazz, instance);

@@ -28,5 +28,6 @@
 [Test worker] INFO org.mardi2020.dependencyinjection.config.MyApplicationContextV1 -- Registered bean: DependencyinjectionApplication
 [Test worker] INFO org.mardi2020.dependencyinjection.config.MyApplicationContextV1 -- Registered bean: UserService
 [Test worker] INFO org.mardi2020.dependencyinjection.config.MyApplicationContextV1 -- Application context loaded. Registered beans: [class org.mardi2020.dependencyinjection.service.ItemService, class org.mardi2020.dependencyinjection.DependencyinjectionApplication, class org.mardi2020.dependencyinjection.service.UserService]
-[Test worker] INFO org.mardi2020.dependencyinjection.BeanTest -- ✅ Singleton Test Passed! All beans are singleton.
+[Test worker] WARN org.mardi2020.dependencyinjection.config.MyApplicationContextV1 -- ⚠️ Warning: UserService is already registered as singleton! Skipping registration.
 ```
+- 덮어씌우면 싱글톤이 깨지는 문제 해결
